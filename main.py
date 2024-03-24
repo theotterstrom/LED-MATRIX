@@ -69,7 +69,7 @@ class RGB_Api():
             text="",  # Initialize as empty string
             line_spacing=self.txt_line_spacing
         )
-        self.bus_label.x = self.txt_x
+        self.bus_label.x = self.txt_x + 2
         self.bus_label.y = self.bus_txt_y
 
     def update_tram_text(self, value):
@@ -103,13 +103,17 @@ class RGB_Api():
                 firstbus = str(busdepartures[0]["time"]["displayTime"]).replace(" min", "m")
                 secondbus = str(busdepartures[1]["time"]["displayTime"]).replace(" min", "m")
                 timelist = [firsttram, secondtram, firstbus, secondbus]
-                for timeindex in timelist:
-                    if is_time_24h_format(timeindex):
-                        timeindex = ">30"
-                tramstring = timelist[0] +" "+ timelist[1]
-                busstring = timelist[2] +" "+ timelist[3]
+
+                for i, timeindex in enumerate(timelist):
+                    if ":" in timeindex:
+                        print("yes")
+                        timelist[i] = ">30"
+
+                tramstring = timelist[0] + " " + timelist[1]
+                busstring = timelist[2] + " " + timelist[3]
                 self.update_tram_text(tramstring)
                 self.update_bus_text(busstring)
+
 
 
 
