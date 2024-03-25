@@ -79,17 +79,21 @@ class RGB_Api():
     def dynamic_text(self):
         def isTram(obj):
             return obj["transport"]["line"] == "30" and obj["transport"]["direction"] == 2
-        
+
         def isBus(obj):
             return obj["transport"]["line"] != "30" and obj["transport"]["direction"] == 2
-        
+
         def split_string_in_half(s):
-            length = len(s)
-            mid_point = length // 2
-            first_half = s[:mid_point]
-            second_half = s[mid_point:]
-            return first_half, second_half
-       
+            if s:
+                try:
+                    length = len(s)
+                    mid_point = length // 2
+                    first_half = s[:mid_point]
+                    second_half = s[mid_point:]
+                    return first_half, second_half
+                except:
+                    return s
+
         def getDepartures(requests):
             response = requests.get("http://mortvikbyalag.se/api/user/departureget")
             departurejson = response.json()
@@ -106,11 +110,14 @@ class RGB_Api():
             tramstring = timelist[0] + " " + timelist[1]
             busstring = timelist[2] + " " + timelist[3]
             return tramstring, busstring
-        
+
+
         pool = socketpool.SocketPool(wifi.radio)
         ssl_context = ssl.create_default_context()
         requests = adafruit_requests.Session(pool, ssl_context)
 
+
+        #i
         i = 0
         while True:
             try:
@@ -122,14 +129,18 @@ class RGB_Api():
             except Exception as e:
                 first_half, second_half = split_string_in_half(e)
                 self.txt_scale = 1
-                self.update_tram_text(first_half)
-                self.update_bus_text(second_half)
+                self.update_tram_text(e)
+                self.update_bus_text("Sorry!")
                 print("fail", e, "2")
                 if(i <= 10):
                     i += 1
                     time.sleep(2)
                     continue
-            time.sleep(10)        
+                else:
+                    # Restart Raspberry Pi Pico
+                    print("Restarting Raspberry Pi Pico...")
+                    microcontroller.reset()
+            time.sleep(10)
 
 def connectWifi():
     print("Connecting to WiFi")
