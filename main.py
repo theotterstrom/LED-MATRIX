@@ -7,13 +7,11 @@ import adafruit_display_text.label
 import terminalio
 from adafruit_bitmap_font import bitmap_font
 import time
-from math import sin
 import ipaddress
 import wifi
 import socketpool
 import adafruit_requests
 import ssl
-import re
 
 bit_depth_value = 6
 unit_width = 96
@@ -81,64 +79,62 @@ class RGB_Api():
     def dynamic_text(self):
         def isTram(obj):
             return obj["transport"]["line"] == "30" and obj["transport"]["direction"] == 2
-
+        
         def isBus(obj):
             return obj["transport"]["line"] != "30" and obj["transport"]["direction"] == 2
-        def is_time_24h_format(input_str):
-            pattern = re.compile(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$')
-            return bool(pattern.match(input_str))
-
+        
+        def split_string_in_half(s):
+            length = len(s)
+            mid_point = length // 2
+            first_half = s[:mid_point]
+            second_half = s[mid_point:]
+            return first_half, second_half
+       
+        def getDepartures(requests):
+            response = requests.get("http://mortvikbyalag.se/api/user/departureget")
+            departurejson = response.json()
+            tramdepartures = list(filter(isTram, departurejson))
+            busdepartures = list(filter(isBus, departurejson))
+            firsttram = str(tramdepartures[0]["time"]["displayTime"]).replace(" min", "m")
+            secondtram = str(tramdepartures[1]["time"]["displayTime"]).replace(" min", "m")
+            firstbus = str(busdepartures[0]["time"]["displayTime"]).replace(" min", "m")
+            secondbus = str(busdepartures[1]["time"]["displayTime"]).replace(" min", "m")
+            timelist = [firsttram, secondtram, firstbus, secondbus]
+            for i, timeindex in enumerate(timelist):
+                if ":" in timeindex:
+                    timelist[i] = ">30m"
+            tramstring = timelist[0] + " " + timelist[1]
+            busstring = timelist[2] + " " + timelist[3]
+            return tramstring, busstring
+        
         pool = socketpool.SocketPool(wifi.radio)
         ssl_context = ssl.create_default_context()
         requests = adafruit_requests.Session(pool, ssl_context)
 
+        i = 0
         while True:
             try:
-                response = requests.get("http://mortvikbyalag.se/api/user/departureget")
-                departurejson = response.json()
-                tramdepartures = list(filter(isTram, departurejson))
-                busdepartures = list(filter(isBus, departurejson))
-                firsttram = str(tramdepartures[0]["time"]["displayTime"]).replace(" min", "m")
-                secondtram = str(tramdepartures[1]["time"]["displayTime"]).replace(" min", "m")
-                firstbus = str(busdepartures[0]["time"]["displayTime"]).replace(" min", "m")
-                secondbus = str(busdepartures[1]["time"]["displayTime"]).replace(" min", "m")
-                timelist = [firsttram, secondtram, firstbus, secondbus]
-
-                for i, timeindex in enumerate(timelist):
-                    if ":" in timeindex:
-                        print("yes")
-                        timelist[i] = ">30"
-
-                tramstring = timelist[0] + " " + timelist[1]
-                busstring = timelist[2] + " " + timelist[3]
+                tramstring, busstring = getDepartures(requests)
+                self.txt_scale = 2
                 self.update_tram_text(tramstring)
                 self.update_bus_text(busstring)
-
-
-
-
+                i = 0
             except Exception as e:
-                self.text_scale = 1
-                DISPLAY.show(e)
+                first_half, second_half = split_string_in_half(e)
+                self.txt_scale = 1
+                self.update_tram_text(first_half)
+                self.update_bus_text(second_half)
                 print("fail", e, "2")
-
-            time.sleep(10)  # Change text every second
+                if(i <= 10):
+                    i += 1
+                    time.sleep(2)
+                    continue
+            time.sleep(10)        
 
 def connectWifi():
-    #print()
-    #print("Connecting to WiFi")
-
+    print("Connecting to WiFi")
     wifi.radio.connect('Tele2_F182E6', 'iurvwxjp')
-
-    #print("Connected to WiFi")
-
-    #print("My MAC addr:", [hex(i) for i in wifi.radio.mac_address])
-
-    #print("My IP address is", wifi.radio.ipv4_address)
-
-    ipv4 = ipaddress.ip_address("8.8.4.4")
-    #print("Ping google.com: %f ms" % (wifi.radio.ping(ipv4)*1000))
-
+    print("Connected to WiFi", wifi.radio.ipv4_address)
 
 if __name__ == '__main__':
     connectWifi()
@@ -147,4 +143,4 @@ if __name__ == '__main__':
     GROUP.append(RGB.tram_label)
     GROUP.append(RGB.bus_label)
     DISPLAY.show(GROUP)
-    RGB.dynamic_text()  # Start updating the text dynamically
+    RGB.dynamic_text()
