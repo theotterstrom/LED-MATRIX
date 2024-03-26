@@ -127,7 +127,7 @@ class RGB_Api():
                 self.update_bus_text(busstring)
                 i = 0
             except Exception as e:
-                first_half, second_half = split_string_in_half(e)
+                #first_half, second_half = split_string_in_half(e)
                 self.txt_scale = 1
                 self.update_tram_text(e)
                 self.update_bus_text("Sorry!")
