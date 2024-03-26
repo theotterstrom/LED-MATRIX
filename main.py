@@ -12,6 +12,7 @@ import wifi
 import socketpool
 import adafruit_requests
 import ssl
+import microcontroller
 
 bit_depth_value = 6
 unit_width = 96
