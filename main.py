@@ -155,4 +155,7 @@ if __name__ == '__main__':
     GROUP.append(RGB.tram_label)
     GROUP.append(RGB.bus_label)
     DISPLAY.show(GROUP)
-    RGB.dynamic_text()
+    try:
+        RGB.dynamic_text()
+    except:
+        microcontroller.reset()
