@@ -77,6 +77,9 @@ class RGB_Api():
     def update_bus_text(self, value):
         self.bus_label.text = str(value)
 
+    def update_text_size(self, value):
+        self.txt_scale = value
+
     def dynamic_text(self):
         def isTram(obj):
             transport_info = obj.get("transport")
@@ -143,6 +146,7 @@ class RGB_Api():
                 self.update_bus_text(busstring)
                 i = 0
             except Exception as e:
+                self.update_text_size(1)
                 upstring = e[:len(e) // 2]
                 downstring = e[len(e) // 2:]
                 self.update_tram_text(upstring)
