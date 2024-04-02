@@ -106,28 +106,18 @@ class RGB_Api():
             busdepartures = list(filter(isBus, departurejson))
             tramList = []
             busList = []
+            i = 0
             for item in tramdepartures:
-                tramList.append(str(item["time"]["displayTime"]).replace(" min", "m"))
+                if i < 2:
+                    tramList.append(str(item["time"]["displayTime"]).replace(" min", "m"))
+                    i += 1
+            i = 0
             for item in busdepartures:
-                busList.append(str(item["time"]["displayTime"]).replace(" min", "m"))
-
+                if i < 2:
+                    busList.append(str(item["time"]["displayTime"]).replace(" min", "m"))
+                    i += 1
             tramstring = " ".join(tramList)
             busstring = " ".join(busList)
-
-            # firsttram = str(tramdepartures[0]["time"]["displayTime"]).replace(" min", "m")
-            # secondtram = str(tramdepartures[1]["time"]["displayTime"]).replace(" min", "m")
-            # firstbus = str(busdepartures[0]["time"]["displayTime"]).replace(" min", "m")
-            # secondbus = str(busdepartures[1]["time"]["displayTime"]).replace(" min", "m")
-
-
-
-            # timelist = [firsttram, secondtram, firstbus, secondbus]
-            # for i, timeindex in enumerate(timelist):
-            #     if ":" in timeindex:
-            #         timelist[i] = ">30m"
-            # tramstring = timelist[0] + " " + timelist[1]
-            # busstring = timelist[2] + " " + timelist[3]
-
             return tramstring, busstring
 
 
