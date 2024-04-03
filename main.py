@@ -53,7 +53,7 @@ class RGB_Api():
         self.tram_label = adafruit_display_text.label.Label(
             self.txt_font,
             color=self.txt_color,
-            scale=self.txt_scale,
+            scale=2,
             text="",  # Initialize as empty string
             line_spacing=self.txt_line_spacing
         )
@@ -64,7 +64,7 @@ class RGB_Api():
         self.bus_label = adafruit_display_text.label.Label(
             self.txt_font,
             color=self.bus_color,
-            scale=self.txt_scale,
+            scale=2,
             text="",  # Initialize as empty string
             line_spacing=self.txt_line_spacing
         )
@@ -78,7 +78,8 @@ class RGB_Api():
         self.bus_label.text = str(value)
 
     def update_text_size(self, value):
-        self.txt_scale = value
+        self.tram_label.scale = value
+        self.bus_label.scale = value
 
     def dynamic_text(self):
         def isTram(obj):
@@ -109,29 +110,26 @@ class RGB_Api():
             i = 0
             for item in tramdepartures:
                 if i < 2:
-                    tramList.append(str(item["time"]["displayTime"]).replace(" min", "m"))
+                    tramList.append(item["time"]["displayTime"]).replace(" min", "m")
                     i += 1
             i = 0
             for item in busdepartures:
                 if i < 2:
-                    busList.append(str(item["time"]["displayTime"]).replace(" min", "m"))
+                    busList.append(item["time"]["displayTime"]).replace(" min", "m")
                     i += 1
             tramstring = " ".join(tramList)
             busstring = " ".join(busList)
             return tramstring, busstring
-
-
+    
         pool = socketpool.SocketPool(wifi.radio)
         ssl_context = ssl.create_default_context()
         requests = adafruit_requests.Session(pool, ssl_context)
 
-
-        #i
         i = 0
         while True:
             try:
+                self.update_text_size(2)
                 tramstring, busstring = getDepartures(requests)
-                self.txt_scale = 2
                 self.update_tram_text(tramstring)
                 self.update_bus_text(busstring)
                 i = 0
@@ -141,14 +139,12 @@ class RGB_Api():
                 downstring = e[len(e) // 2:]
                 self.update_tram_text(upstring)
                 self.update_bus_text(downstring)
-                print("fail", e, "2")
+                print(e)
                 if(i <= 10):
                     i += 1
                     time.sleep(2)
                     continue
                 else:
-                    # Restart Raspberry Pi Pico
-                    print("Restarting Raspberry Pi Pico...")
                     microcontroller.reset()
             time.sleep(10)
 
