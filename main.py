@@ -53,7 +53,7 @@ class RGB_Api():
         self.tram_label = adafruit_display_text.label.Label(
             self.txt_font,
             color=self.txt_color,
-            scale=self.txt_scale,
+            scale=2,
             text="",  # Initialize as empty string
             line_spacing=self.txt_line_spacing
         )
@@ -64,7 +64,7 @@ class RGB_Api():
         self.bus_label = adafruit_display_text.label.Label(
             self.txt_font,
             color=self.bus_color,
-            scale=self.txt_scale,
+            scale=2,
             text="",  # Initialize as empty string
             line_spacing=self.txt_line_spacing
         )
@@ -77,69 +77,74 @@ class RGB_Api():
     def update_bus_text(self, value):
         self.bus_label.text = str(value)
 
+    def update_text_size(self, value):
+        self.tram_label.scale = value
+        self.bus_label.scale = value
+
     def dynamic_text(self):
         def isTram(obj):
-            return obj["transport"]["line"] == "30" and obj["transport"]["direction"] == 2
+            transport_info = obj.get("transport")
+            if transport_info:
+                line = transport_info.get("line")
+                direction = transport_info.get("direction")
+                if line == "30" and direction == 2:
+                    return True
+            return False
 
         def isBus(obj):
-            return obj["transport"]["line"] != "30" and obj["transport"]["direction"] == 2
-
-        def split_string_in_half(s):
-            if s:
-                try:
-                    length = len(s)
-                    mid_point = length // 2
-                    first_half = s[:mid_point]
-                    second_half = s[mid_point:]
-                    return first_half, second_half
-                except:
-                    return s
+            transport_info = obj.get("transport")
+            if transport_info:
+                line = transport_info.get("line")
+                direction = transport_info.get("direction")
+                if line != "30" and direction == 2:
+                    return True
+            return False
 
         def getDepartures(requests):
             response = requests.get("http://mortvikbyalag.se/api/user/departureget")
             departurejson = response.json()
             tramdepartures = list(filter(isTram, departurejson))
             busdepartures = list(filter(isBus, departurejson))
-            firsttram = str(tramdepartures[0]["time"]["displayTime"]).replace(" min", "m")
-            secondtram = str(tramdepartures[1]["time"]["displayTime"]).replace(" min", "m")
-            firstbus = str(busdepartures[0]["time"]["displayTime"]).replace(" min", "m")
-            secondbus = str(busdepartures[1]["time"]["displayTime"]).replace(" min", "m")
-            timelist = [firsttram, secondtram, firstbus, secondbus]
-            for i, timeindex in enumerate(timelist):
-                if ":" in timeindex:
-                    timelist[i] = ">30m"
-            tramstring = timelist[0] + " " + timelist[1]
-            busstring = timelist[2] + " " + timelist[3]
+            tramList = []
+            busList = []
+            i = 0
+            for item in tramdepartures:
+                if i < 2:
+                    tramList.append(item["time"]["displayTime"]).replace(" min", "m")
+                    i += 1
+            i = 0
+            for item in busdepartures:
+                if i < 2:
+                    busList.append(item["time"]["displayTime"]).replace(" min", "m")
+                    i += 1
+            tramstring = " ".join(tramList)
+            busstring = " ".join(busList)
             return tramstring, busstring
-
-
+    
         pool = socketpool.SocketPool(wifi.radio)
         ssl_context = ssl.create_default_context()
         requests = adafruit_requests.Session(pool, ssl_context)
 
-
-        #i
         i = 0
         while True:
             try:
+                self.update_text_size(2)
                 tramstring, busstring = getDepartures(requests)
-                self.txt_scale = 2
                 self.update_tram_text(tramstring)
                 self.update_bus_text(busstring)
                 i = 0
             except Exception as e:
-                #first_half, second_half = split_string_in_half(e)
-                self.txt_scale = 1
-                self.update_tram_text(e)
-                self.update_bus_text("Sorry!")
-                print("fail", e, "2")
+                self.update_text_size(1)
+                upstring = e[:len(e) // 2]
+                downstring = e[len(e) // 2:]
+                self.update_tram_text(upstring)
+                self.update_bus_text(downstring)
+                print(e)
                 if(i <= 10):
                     i += 1
                     time.sleep(2)
                     continue
                 else:
-                    # Restart Raspberry Pi Pico
-                    print("Restarting Raspberry Pi Pico...")
                     microcontroller.reset()
             time.sleep(10)
 
