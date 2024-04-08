@@ -68,7 +68,7 @@ class RGB_Api():
             text="",  # Initialize as empty string
             line_spacing=self.txt_line_spacing
         )
-        self.bus_label.x = self.txt_x + 2
+        self.bus_label.x = self.txt_x
         self.bus_label.y = self.bus_txt_y
 
     def update_tram_text(self, value):
