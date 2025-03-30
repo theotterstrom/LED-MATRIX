@@ -5,3 +5,5 @@ After the information is fetched in the loop, the relevant departures are then e
 The hardware being used for this is:
 1. A Raspberry pi Pico W
 2. A Waveshare LED-matrix panel
+
+The microcontroller is programmed and booted in Micropython and the IDE used for this project was Mu-editor.
